@@ -189,19 +189,28 @@ export default abstract class BackgroundFilterProcessor {
       return;
     }
     const model = this.spec.model;
-    this.worker.postMessage({
-      msg: 'loadModel',
-      payload: {
-        modelUrl: model.path,
-        inputHeight: model.input.height,
-        inputWidth: model.input.width,
-        inputChannels: 4,
-        modelRangeMin: model.input.range[0],
-        modelRangeMax: model.input.range[1],
-        blurPixels: 0,
-      },
-    });
+    // this.worker.postMessage({
+    //   msg: 'loadModel',
+    //   payload: {
+    //     modelUrl: model.path,
+    //     inputHeight: model.input.height,
+    //     inputWidth: model.input.width,
+    //     inputChannels: 4,
+    //     modelRangeMin: model.input.range[0],
+    //     modelRangeMax: model.input.range[1],
+    //     blurPixels: 0,
+    //   },
+    // });
     this.initWorkerPromise.resolve({});
+    this.worker.postMessage({
+        msg: 'buildEngine',
+        payload: {
+            segmentationModelUrl: model.path,
+            width: 960,
+            height: 540,
+            channels: 4,
+        }
+    })
   }
 
   /**
@@ -218,12 +227,22 @@ export default abstract class BackgroundFilterProcessor {
     }
     this.modelInitialized = true;
     this.loadModelPromise.resolve({});
+
+    this.worker.postMessage({
+      msg: 'setBackgroundBlurStrength',
+      payload: {
+        strength: 6
+      }
+    });
   }
 
   /** Updates the payload output value in response to worker's predict event
    */
   handlePredict(msg: { payload: { output: ImageData } }): void {
     this.mask$.next(msg.payload.output as ImageData);
+  }
+
+  handleRun(msg : ImageData): void {
   }
 
   /**
@@ -239,12 +258,27 @@ export default abstract class BackgroundFilterProcessor {
       case 'initialize':
         this.handleInitialize(msg);
         break;
+      case 'buildEngineComplete':
+        if (!msg.payload) {
+          console.error('failed to initialize segmentation');
+          console.log(msg.payload);
+        }
+        console.log('SUCCESS to initialize segmentation');
+        this.handleLoadModel(msg);
+        break
       case 'loadModel':
         this.handleLoadModel(msg);
         break;
       case 'predict':
         this.handlePredict(msg);
         break;
+      case 'runComplete':
+        if (!msg.payload) {
+          console.error('failed to run cwt2')
+          return
+        }
+        this.handleRun(msg.payload)
+        break
       default:
         this.logger.info(`unexpected event msg: ${this.stringify(msg)}`);
         break;
@@ -290,6 +324,7 @@ export default abstract class BackgroundFilterProcessor {
    * @returns the updated buffer that contains the image with the background replaced.
    */
   async process(buffers: VideoFrameBuffer[]): Promise<VideoFrameBuffer[]> {
+    console.log('process frame...');
     if (this.destroyed) {
       return buffers;
     }
@@ -339,7 +374,7 @@ export default abstract class BackgroundFilterProcessor {
 
     try {
       this.frameCounter.filterSubmitted();
-      let mask = this.mask$.value;
+      // let mask = this.mask$.value;
 
       const hscale = this.spec.model.input.width / inputCanvas.width;
       const vscale = this.spec.model.input.height / inputCanvas.height;
@@ -356,26 +391,29 @@ export default abstract class BackgroundFilterProcessor {
       scaledCtx.drawImage(inputCanvas, 0, 0);
       scaledCtx.restore();
 
-      const imageData = scaledCtx.getImageData(
-        0,
-        0,
-        this.scaledCanvas.width,
-        this.scaledCanvas.height
-      );
+      // const imageData = scaledCtx.getImageData(
+      //   0,
+      //   0,
+      //   this.scaledCanvas.width,
+      //   this.scaledCanvas.height
+      // );
+
+      console.log('inputCanvas.width = ' + inputCanvas.width + ' inputCanvas.height = ' + inputCanvas.height)
+      const imageDataNew = inputCanvas.getContext('2d').getImageData(0, 0, inputCanvas.width, inputCanvas.height);
 
       // update the filter mask based on the filter update rate
       if (this.frameNumber % this.videoFramesPerFilterUpdate === 0) {
         // process frame...
         const maskPromise = this.mask$.whenNext();
-        this.worker.postMessage({ msg: 'predict', payload: imageData }, [imageData.data.buffer]);
-        mask = await maskPromise;
+        this.worker.postMessage({ msg: 'run', payload: imageDataNew }, [imageDataNew.data.buffer]);
+        await maskPromise;
       }
       // It's possible that while waiting for the predict to complete the processor was destroyed.
       // adding a destroyed check here to ensure the implementation of drawImageWithMask does not throw
       // an error due to destroyed processor.
-      if (!this.destroyed) {
-        this.drawImageWithMask(inputCanvas, mask);
-      }
+      // if (!this.destroyed) {
+      //   this.drawImageWithMask(inputCanvas, mask);
+      // }
     } catch (error) {
       this.logger.error(`could not process ${this.filterType} frame buffer due to ${error}`);
       return buffers;

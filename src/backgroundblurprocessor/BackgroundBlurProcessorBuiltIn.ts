@@ -98,6 +98,13 @@ export default class BackgroundBlurProcessorBuiltIn extends BackgroundBlurProces
     this.logger.info(`background blur amount set to ${this.blurAmount}`);
   }
 
+  handleRun(msg : ImageData): void {
+    console.log('handleRun...')
+    console.log('dimensions of msg: ' + msg.width + ' ' + msg.height)
+    this.canvasCtx.putImageData(msg, 0, 0);
+    this.mask$.next(msg as ImageData);
+  }
+
   handleInitialize(msg: { payload: number }): void {
     this.logger.info(`received initialize message: ${this.stringify(msg)}`);
     if (!msg.payload) {
@@ -107,19 +114,33 @@ export default class BackgroundBlurProcessorBuiltIn extends BackgroundBlurProces
     }
 
     const model = this.spec.model;
-    this.worker.postMessage({
-      msg: 'loadModel',
-      payload: {
-        modelUrl: model.path,
-        inputHeight: model.input.height,
-        inputWidth: model.input.width,
-        inputChannels: 4,
-        modelRangeMin: model.input.range[0],
-        modelRangeMax: model.input.range[1],
-        blurPixels: this.blurAmount,
-      },
-    });
+    // this.worker.postMessage({
+    //   msg: 'loadModel',
+    //   payload: {
+    //     modelUrl: model.path,
+    //     inputHeight: model.input.height,
+    //     inputWidth: model.input.width,
+    //     inputChannels: 4,
+    //     modelRangeMin: model.input.range[0],
+    //     modelRangeMax: model.input.range[1],
+    //     blurPixels: this.blurAmount,
+    //   },
+    // });
+    
+    console.log('model.input.width = ' + model.input.width + ' model.input.height = ' + model.input.height)
+    console.log('this.targetCanvas.width = ' + this.targetCanvas.width + ' this.targetCanvas.height = ' + this.targetCanvas.height)
+    console.log('this.blurCanvas.width = ' + this.blurCanvas.width + ' this.blurCanvas.height = ' + this.blurCanvas.height)
     this.initWorkerPromise.resolve({});
+    this.worker.postMessage({
+        msg: 'buildEngine',
+        payload: {
+            segmentationModelUrl: model.path,
+            width: 960,
+            height: 540,
+            channels: 4,
+        }
+    })
+    this.logger.info('buildEngine sent command');
   }
 
   handlePredict(msg: { payload: { blurOutput: ImageData; output: ImageData } }): void {

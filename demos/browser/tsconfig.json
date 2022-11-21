@@ -2,7 +2,9 @@
   "extends": "../../config/tsconfig.base.json",
   "compilerOptions": {
     "outDir": "./build",
-    "rootDir": "../.."
+    "rootDir": "../..",
+    "noUnusedLocals": false,
+    "noUnusedParameters": false
   },
   "include": [
     "./app/**/*"

@@ -160,6 +160,7 @@ function getVoiceFocusSpec(joinInfo: any): VoiceFocusSpec {
 const MAX_VOICE_FOCUS_COMPLEXITY: VoiceFocusModelComplexity | undefined = undefined;
 
 const BACKGROUND_BLUR_CDN = search.get('blurCDN') || undefined;
+const BACKGROUND_BLUR_LOCAL = 'http://127.0.0.1:9000';
 const BACKGROUND_BLUR_ASSET_GROUP = search.get('blurAssetGroup') || undefined;
 const BACKGROUND_BLUR_REVISION_ID = search.get('blurRevisionID') || undefined;
 
@@ -168,6 +169,12 @@ const BACKGROUND_BLUR_PATHS: BackgroundFilterPaths = BACKGROUND_BLUR_CDN && {
   wasm: `${BACKGROUND_BLUR_CDN}/bgblur/wasm/_cwt-wasm.wasm`,
   simd: `${BACKGROUND_BLUR_CDN}/bgblur/wasm/_cwt-wasm-simd.wasm`,
 };
+const BACKGROUND_BLUR_PATHS_LOCAL: BackgroundFilterPaths = {
+  worker: `${BACKGROUND_BLUR_LOCAL}/worker.js`,
+  wasm: `${BACKGROUND_BLUR_LOCAL}/_cwt-wasm.wasm`,
+  simd: `${BACKGROUND_BLUR_LOCAL}/_cwt-wasm-simd.wasm`,
+};
+
 const BACKGROUND_BLUR_MODEL = BACKGROUND_BLUR_CDN && ModelSpecBuilder.builder()
     .withSelfieSegmentationDefaults()
     .withPath(`${BACKGROUND_BLUR_CDN}/bgblur/models/selfie_segmentation_landscape.tflite`)
@@ -177,7 +184,7 @@ const BACKGROUND_BLUR_ASSET_SPEC = (BACKGROUND_BLUR_ASSET_GROUP || BACKGROUND_BL
   revisionID: BACKGROUND_BLUR_REVISION_ID,
 }
 
-type VideoFilterName = 'Emojify' | 'CircularCut' | 'NoOp' | 'Segmentation' | 'Resize (9/16)' | 'Background Blur 10% CPU' | 'Background Blur 20% CPU' | 'Background Blur 30% CPU' | 'Background Blur 40% CPU' | 'Background Replacement' | 'None';
+type VideoFilterName = 'Emojify' | 'CircularCut' | 'NoOp' | 'Segmentation' | 'Resize (9/16)' | 'Background Blur 10% CPU' | 'Background Blur 20% CPU' | 'Background Blur 30% CPU' | 'Background Blur 40% CPU' | 'Background Blur 40% Native' | 'Background Replacement' | 'None';
 
 const VIDEO_FILTERS: VideoFilterName[] = ['Emojify', 'CircularCut', 'NoOp', 'Resize (9/16)'];
 
@@ -2476,7 +2483,7 @@ export class DemoMeetingApp
 
   private getBackgroundBlurSpec(): BackgroundFilterSpec {
     return {
-      paths: BACKGROUND_BLUR_PATHS,
+      paths: BACKGROUND_BLUR_PATHS_LOCAL,
       model: BACKGROUND_BLUR_MODEL,
       ...BACKGROUND_BLUR_ASSET_SPEC
     };
@@ -2501,17 +2508,24 @@ export class DemoMeetingApp
         });
       }
 
-      if (this.supportsBackgroundBlur) {
-        filters.push('Background Blur 10% CPU');
-        filters.push('Background Blur 20% CPU');
-        filters.push('Background Blur 30% CPU');
-        filters.push('Background Blur 40% CPU');
-      }
+      // if (this.supportsBackgroundBlur) {
+      //   filters.push('Background Blur 10% CPU');
+      //   filters.push('Background Blur 20% CPU');
+      //   filters.push('Background Blur 30% CPU');
+      //   filters.push('Background Blur 40% CPU');
+      //   filters.push('Background Blur 40% Native');
+      // }
 
       if (this.supportsBackgroundReplacement) {
         filters.push('Background Replacement');
       }
     }
+
+    filters.push('Background Blur 10% CPU');
+    filters.push('Background Blur 20% CPU');
+    filters.push('Background Blur 30% CPU');
+    filters.push('Background Blur 40% CPU'); 
+    filters.push('Background Blur 40% Native');
 
     this.populateFilterList(isPreviewWindow, genericName, filters);
   }
@@ -3088,6 +3102,16 @@ export class DemoMeetingApp
       };
 
       const cpuUtilization: number = Number(videoFilter.match(/([0-9]{2})%/)[1]);
+      try{
+        console.log('BACKGROUND_BLUR_MODEL = ' + BACKGROUND_BLUR_MODEL);
+        console.log('cpuUtilization = ' + cpuUtilization);
+
+        this.blurProcessor = await BackgroundBlurVideoFrameProcessor.create(this.getBackgroundBlurSpec(), { filterCPUUtilization: cpuUtilization });
+      }
+      catch(error){
+        console.log(error)
+        console.log("End of try-catch block")
+      }
       this.blurProcessor = await BackgroundBlurVideoFrameProcessor.create(this.getBackgroundBlurSpec(), { filterCPUUtilization: cpuUtilization });
       this.blurProcessor.addObserver(this.blurObserver);
       return this.blurProcessor;

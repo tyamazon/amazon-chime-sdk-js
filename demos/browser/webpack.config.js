@@ -17,15 +17,15 @@ const InlineChunkHtmlPlugin = require('react-dev-utils/InlineChunkHtmlPlugin');
  * This is exactly what we document in the CSP guide.
  */
 const csp = {
-  'connect-src': "'self' https://*.chime.aws wss://*.chime.aws https://*.amazonaws.com",
+  'connect-src': "'self' https://*.chime.aws wss://*.chime.aws https://*.amazonaws.com http://127.0.0.1:9000 http://127.0.0.1:8080 http://localhost:8082 http://localhost",
 
   // 'wasm-unsafe-eval' is to allow Amazon Voice Focus to work in Chrome 95+.
   // Strictly speaking, this should be enough, but the worker cannot compile WebAssembly unless
   // 'unsafe-eval' is also present.
-  'script-src': "'self' 'unsafe-eval' 'wasm-eval' 'wasm-unsafe-eval'",
+  'script-src': "'self' 'unsafe-eval' 'wasm-eval' 'wasm-unsafe-eval' http://127.0.0.1:9000 http://127.0.0.1:8080 http://localhost:8082 http://localhost",
 
   // Script hashes/nonces are not emitted for script-src-elem, so just add unsafe-inline.
-  'script-src-elem': "'self' 'unsafe-inline'",
+  'script-src-elem': "'self' 'unsafe-inline' http://127.0.0.1:9000 http://127.0.0.1:8080 http://localhost:8082 http://localhost",
   'worker-src': "'self' blob:",
   'child-src': "'self' blob:",
 };

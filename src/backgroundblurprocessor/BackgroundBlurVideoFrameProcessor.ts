@@ -10,7 +10,7 @@ import NoOpVideoFrameProcessor from '../videoframeprocessor/NoOpVideoFrameProces
 import BackgroundBlurOptions from './BackgroundBlurOptions';
 import BackgroundBlurProcessor from './BackgroundBlurProcessor';
 import BackgroundBlurProcessorBuiltIn from './BackgroundBlurProcessorBuiltIn';
-import BackgroundBlurProcessorProvided from './BackgroundBlurProcessorProvided';
+// import BackgroundBlurProcessorProvided from './BackgroundBlurProcessorProvided';
 import BlurStrength from './BackgroundBlurStrength';
 
 /**
@@ -75,14 +75,17 @@ export default class BackgroundBlurVideoFrameProcessor extends BackgroundFilterV
     }
 
     let processor: BackgroundBlurProcessor;
-    if (await BackgroundBlurProcessorProvided.isSupported()) {
-      logger.info('Using browser-provided background blur');
-      processor = new BackgroundBlurProcessorProvided(spec, options);
-    } else {
-      logger.info('Using built-in background blur');
-      processor = new BackgroundBlurProcessorBuiltIn(spec, options);
-    }
+    // if (await BackgroundBlurProcessorProvided.isSupported()) {
+    //   logger.info('Using browser-provided background blur');
+    //   processor = new BackgroundBlurProcessorProvided(spec, options);
+    // } else {
+    //   logger.info('Using built-in background blur');
+    //   processor = new BackgroundBlurProcessorBuiltIn(spec, options);
+    // }
 
+    logger.info('Using built-in background blur');
+    processor = new BackgroundBlurProcessorBuiltIn(spec, options);
+    
     await processor.loadAssets();
     return processor;
   }
