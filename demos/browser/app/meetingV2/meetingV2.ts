@@ -160,6 +160,7 @@ function getVoiceFocusSpec(joinInfo: any): VoiceFocusSpec {
 const MAX_VOICE_FOCUS_COMPLEXITY: VoiceFocusModelComplexity | undefined = undefined;
 
 const BACKGROUND_BLUR_CDN = search.get('blurCDN') || undefined;
+const BACKGROUND_BLUR_CDN_CUSTOM = 'http://d3p914lclsl5pb.cloudfront.net';
 const BACKGROUND_BLUR_LOCAL = 'http://127.0.0.1:9000';
 const BACKGROUND_BLUR_ASSET_GROUP = search.get('blurAssetGroup') || undefined;
 const BACKGROUND_BLUR_REVISION_ID = search.get('blurRevisionID') || undefined;
@@ -173,6 +174,11 @@ const BACKGROUND_BLUR_PATHS_LOCAL: BackgroundFilterPaths = {
   worker: `${BACKGROUND_BLUR_LOCAL}/worker.js`,
   wasm: `${BACKGROUND_BLUR_LOCAL}/_cwt-wasm.wasm`,
   simd: `${BACKGROUND_BLUR_LOCAL}/_cwt-wasm-simd.wasm`,
+};
+const BACKGROUND_BLUR_PATHS_CDN_CUSTOM: BackgroundFilterPaths = {
+  worker: `${BACKGROUND_BLUR_CDN_CUSTOM}/worker.js`,
+  wasm: `${BACKGROUND_BLUR_CDN_CUSTOM}/_cwt-wasm.wasm`,
+  simd: `${BACKGROUND_BLUR_CDN_CUSTOM}/_cwt-wasm-simd.wasm`,
 };
 
 const BACKGROUND_BLUR_MODEL = BACKGROUND_BLUR_CDN && ModelSpecBuilder.builder()
@@ -2483,7 +2489,7 @@ export class DemoMeetingApp
 
   private getBackgroundBlurSpec(): BackgroundFilterSpec {
     return {
-      paths: BACKGROUND_BLUR_PATHS_LOCAL,
+      paths: BACKGROUND_BLUR_PATHS_CDN_CUSTOM,
       model: BACKGROUND_BLUR_MODEL,
       ...BACKGROUND_BLUR_ASSET_SPEC
     };
