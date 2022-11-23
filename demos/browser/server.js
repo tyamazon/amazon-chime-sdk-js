@@ -70,8 +70,8 @@ function getClientForMeeting(meeting) {
 function serve(host = '0.0.0.0:8080') {
 
   const options = {
-    key: fs.readFileSync('cert/localhost-key.pem'),
-    cert: fs.readFileSync('cert/localhost.pem')
+    key: fs.readFileSync('cert/localhost+1-key.pem'),
+    cert: fs.readFileSync('cert/localhost+1.pem')
   };
 
   // Start an HTTP server to serve the index page and handle meeting actions
