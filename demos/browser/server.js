@@ -5,6 +5,7 @@ const AWS = require('aws-sdk');
 const compression = require('compression');
 const fs = require('fs');
 const http = require('http');
+var https = require('https');
 const url = require('url');
 const { v4: uuidv4 } = require('uuid');
 
@@ -67,8 +68,14 @@ function getClientForMeeting(meeting) {
 }
 
 function serve(host = '0.0.0.0:8080') {
+
+  const options = {
+    key: fs.readFileSync('cert/localhost-key.pem'),
+    cert: fs.readFileSync('cert/localhost.pem')
+  };
+
   // Start an HTTP server to serve the index page and handle meeting actions
-  http.createServer({}, async (request, response) => {
+  https.createServer(options, async (request, response) => {
     log(`${request.method} ${request.url} BEGIN`);
     try {
       // Enable HTTP compression

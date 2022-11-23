@@ -160,7 +160,7 @@ function getVoiceFocusSpec(joinInfo: any): VoiceFocusSpec {
 const MAX_VOICE_FOCUS_COMPLEXITY: VoiceFocusModelComplexity | undefined = undefined;
 
 const BACKGROUND_BLUR_CDN = search.get('blurCDN') || undefined;
-const BACKGROUND_BLUR_CDN_CUSTOM = 'http://d3p914lclsl5pb.cloudfront.net';
+const BACKGROUND_BLUR_CDN_CUSTOM = 'https://d3p914lclsl5pb.cloudfront.net';
 const BACKGROUND_BLUR_LOCAL = 'http://127.0.0.1:9000';
 const BACKGROUND_BLUR_ASSET_GROUP = search.get('blurAssetGroup') || undefined;
 const BACKGROUND_BLUR_REVISION_ID = search.get('blurRevisionID') || undefined;
