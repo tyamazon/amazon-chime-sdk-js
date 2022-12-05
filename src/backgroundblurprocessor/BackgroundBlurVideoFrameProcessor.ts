@@ -43,6 +43,11 @@ class NoOpBackgroundBlurProcessor
    * no-op
    */
   removeObserver(): void {}
+
+  setBlurState(): void {}
+  setBlurStrength2(): void {}
+  setReplacementState(): void {}
+  setReplacementImage(): void {}
 }
 
 /**

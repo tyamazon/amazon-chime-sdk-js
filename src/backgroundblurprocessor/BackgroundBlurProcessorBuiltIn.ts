@@ -91,6 +91,75 @@ export default class BackgroundBlurProcessorBuiltIn extends BackgroundBlurProces
     }
   }
 
+  setBlurState(newState: boolean): void {
+    this.worker.postMessage({
+      msg: 'setBackgroundBlurState',
+        payload: {
+            newState: newState
+        }
+    })
+  }
+
+  setBlurStrength2(blurStrength: number): void {
+    this.worker.postMessage({
+      msg: 'setBackgroundBlurStrength',
+      payload: {
+          strength: blurStrength
+      }
+    })
+  }
+
+  setReplacementState(newState: boolean): void {
+    this.worker.postMessage({
+      msg: 'setBackgroundReplacementState',
+        payload: {
+            newState: newState
+        }
+    })
+  }
+
+  setReplacementImage(imageName: string): void {
+    let dummyImgLen = 4000
+    let imgData = new Uint8ClampedArray(dummyImgLen);
+
+    if (imageName == "black") {
+      for (let i = 0; i < dummyImgLen; i++) {
+        if (i % 4 != 3) {
+          imgData[i] = 1
+        } else {
+          imgData[i] = 255
+        }
+      }
+    } else if (imageName == "blue") {
+      for (let i = 0; i < dummyImgLen; i++) {
+        if (i % 4 == 0) {
+          imgData[i] = 0
+        } else if (i % 4 == 1) {
+          imgData[i] = 0
+        } else if (i % 4 == 2) {
+          imgData[i] = 255
+        } else {
+          imgData[i] = 255
+        }
+      }
+    } else {
+      for (let i = 0; i < dummyImgLen; i++) {
+        if (i % 4 == 3) {
+          imgData[i] = 255
+        } else {
+          imgData[i] = 255
+        }
+      } 
+    }
+
+    this.worker.postMessage({
+      msg: 'setBackgroundReplacementImage',
+      payload: {
+          imgData: new ImageData(imgData, 100, 10)
+      }
+    })
+  }
+
   setBlurPixels(): void {
     // the blurred image is sized down to 144, regardless of what the canvas size is, so
     // we use the default blur strengths (540p)
@@ -99,8 +168,6 @@ export default class BackgroundBlurProcessorBuiltIn extends BackgroundBlurProces
   }
 
   handleRun(msg : ImageData): void {
-    console.log('handleRun...')
-    console.log('dimensions of msg: ' + msg.width + ' ' + msg.height)
     this.canvasCtx.putImageData(msg, 0, 0);
     this.mask$.next(msg as ImageData);
   }
@@ -127,9 +194,6 @@ export default class BackgroundBlurProcessorBuiltIn extends BackgroundBlurProces
     //   },
     // });
     
-    console.log('model.input.width = ' + model.input.width + ' model.input.height = ' + model.input.height)
-    console.log('this.targetCanvas.width = ' + this.targetCanvas.width + ' this.targetCanvas.height = ' + this.targetCanvas.height)
-    console.log('this.blurCanvas.width = ' + this.blurCanvas.width + ' this.blurCanvas.height = ' + this.blurCanvas.height)
     this.initWorkerPromise.resolve({});
     this.worker.postMessage({
         msg: 'buildEngine',

@@ -704,6 +704,36 @@
             </div>
           </div>
         </div>
+        <div class="btn-group mx-1 mx-xl-2 my-2" role="group" aria-label="Apply filter">
+          <button id="button-video-ml" type="button" class="btn btn-success" title="Video ML">
+            Video Effect
+          </button>
+          <button id="button-video-ml-blur-strength-drop" type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split"
+            data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Set Video ML Strength"></button>
+          <div id="dropdown-menu-video-ml-blur-strength" class="dropdown-menu dropdown-menu-end"
+              aria-labelledby="button-video-ml-strength-drop" x-placement="bottom-start">
+              <p>Effect:</p>
+                <select name="effect" id="effect">
+                    <option value="BackgroundBlur">Background Blur</option>
+                    <option value="BackgroundReplacement">Background Replacement</option>
+                    <option value="None">None</option>
+                </select>
+              <p> Blur Strength</p>
+              <select name="blurStrength" id="blurStrength">
+                <option value="5">Low</option>
+                <option value="10">Medium</option>
+                <option value="15">High</option>
+              </select>
+            <p>Background Image:</p>
+                <select name="backgroundImage" id="backgroundImage">
+                    <option value="black">Black</option>
+                    <option value="white">White</option>
+                    <option value="blue">Blue</option>
+                </select>
+            <button id="applyButton"> Apply Effects </button>
+          </div>
+        </div>
+        
         <button id="button-promote-to-primary" type="button" class="btn btn-success mx-1 mx-xl-2 my-2"
                 title="Promote to or demote from Primary meeting" data-bs-toggle="button" aria-pressed="false"
                 autocomplete="off">

@@ -190,7 +190,7 @@ const BACKGROUND_BLUR_ASSET_SPEC = (BACKGROUND_BLUR_ASSET_GROUP || BACKGROUND_BL
   revisionID: BACKGROUND_BLUR_REVISION_ID,
 }
 
-type VideoFilterName = 'Emojify' | 'CircularCut' | 'NoOp' | 'Segmentation' | 'Resize (9/16)' | 'Background Blur 10% CPU' | 'Background Blur 20% CPU' | 'Background Blur 30% CPU' | 'Background Blur 40% CPU' | 'Background Blur 40% Native' | 'Background Replacement' | 'None';
+type VideoFilterName = 'Emojify' | 'CircularCut' | 'NoOp' | 'Segmentation' | 'Resize (9/16)' | 'Background Blur 10% CPU' | 'Background Blur 20% CPU' | 'Background Blur 30% CPU' | 'Background Blur 40% CPU' | 'Video Effect' | 'Background Replacement' | 'None';
 
 const VIDEO_FILTERS: VideoFilterName[] = ['Emojify', 'CircularCut', 'NoOp', 'Resize (9/16)'];
 
@@ -648,6 +648,26 @@ export class DemoMeetingApp
       e.preventDefault();
       this.redirectFromAuthentication();
     });
+
+    document.getElementById('applyButton').addEventListener('click', e => {
+      e.preventDefault();
+      // Confirm our blur processor has been initialized
+      if (this.blurProcessor) {
+        let effect = (<HTMLSelectElement>document.getElementById('effect')).value;
+        let blurStrength = (<HTMLSelectElement>document.getElementById('blurStrength')).value;
+        let bgImageName = (<HTMLSelectElement>document.getElementById('backgroundImage')).value;
+        if (effect == "BackgroundBlur") {
+          this.blurProcessor.setBlurState(true);
+        } else if (effect == "BackgroundReplacement") {
+          this.blurProcessor.setReplacementState(true);
+        } else if (effect == "None") {
+          this.blurProcessor.setBlurState(false);
+          this.blurProcessor.setReplacementState(false);
+        }
+        this.blurProcessor.setBlurStrength2(Number(blurStrength));
+        this.blurProcessor.setReplacementImage(bgImageName);
+      }
+    })
 
     const earlyConnectCheckbox = document.getElementById('preconnect') as HTMLInputElement;
     earlyConnectCheckbox.checked = SHOULD_EARLY_CONNECT;
@@ -2531,7 +2551,7 @@ export class DemoMeetingApp
     filters.push('Background Blur 20% CPU');
     filters.push('Background Blur 30% CPU');
     filters.push('Background Blur 40% CPU'); 
-    filters.push('Background Blur 40% Native');
+    filters.push('Video Effect');
 
     this.populateFilterList(isPreviewWindow, genericName, filters);
   }
@@ -3136,6 +3156,22 @@ export class DemoMeetingApp
       return this.replacementProcessor;
     }
 
+    if (videoFilter.startsWith('Video Effect')) {
+      // In the event that frames start being dropped we should take some action to remove the background blur.
+      this.blurObserver = {
+        filterFrameDurationHigh: (event) => {
+          this.log(`background filter duration high: framed dropped - ${event.framesDropped}, avg - ${event.avgFilterDurationMillis} ms, frame rate - ${event.framerate}, period - ${event.periodMillis} ms`);
+        },
+        filterCPUUtilizationHigh: (event) => {
+          this.log(`background filter CPU utilization high: ${event.cpuUtilization}%`);
+        }
+      };
+
+      const cpuUtilization: number = Number("100");
+      this.blurProcessor = await BackgroundBlurVideoFrameProcessor.create(this.getBackgroundBlurSpec(), { filterCPUUtilization: cpuUtilization });
+      this.blurProcessor.addObserver(this.blurObserver);
+      return this.blurProcessor;
+    }
     return null;
   }
 

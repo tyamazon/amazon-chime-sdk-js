@@ -231,7 +231,7 @@ export default abstract class BackgroundFilterProcessor {
     this.worker.postMessage({
       msg: 'setBackgroundBlurStrength',
       payload: {
-        strength: 6
+        strength: 5
       }
     });
   }
@@ -272,6 +272,18 @@ export default abstract class BackgroundFilterProcessor {
       case 'predict':
         this.handlePredict(msg);
         break;
+      case 'setBackgrounBlurStateDone':
+          console.log('Background blur state updated')
+          break
+      case 'setBackgrounBlurStrengthDone':
+          console.log('Background blur strength updated')
+          break
+      case 'setBackgrounReplacementStateDone':
+          console.log('Background replacement state updated')
+          break
+      case 'setBackgrounReplacementImageDone':
+          console.log('Background replacement image updated')
+          break
       case 'runComplete':
         if (!msg.payload) {
           console.error('failed to run cwt2')
@@ -324,7 +336,6 @@ export default abstract class BackgroundFilterProcessor {
    * @returns the updated buffer that contains the image with the background replaced.
    */
   async process(buffers: VideoFrameBuffer[]): Promise<VideoFrameBuffer[]> {
-    console.log('process frame...');
     if (this.destroyed) {
       return buffers;
     }
@@ -398,7 +409,6 @@ export default abstract class BackgroundFilterProcessor {
       //   this.scaledCanvas.height
       // );
 
-      console.log('inputCanvas.width = ' + inputCanvas.width + ' inputCanvas.height = ' + inputCanvas.height)
       const imageDataNew = inputCanvas.getContext('2d').getImageData(0, 0, inputCanvas.width, inputCanvas.height);
 
       // update the filter mask based on the filter update rate

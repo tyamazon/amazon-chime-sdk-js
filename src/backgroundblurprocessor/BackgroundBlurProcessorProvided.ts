@@ -90,6 +90,11 @@ export default class BackgroundBlurProcessorProvided
     this.setBlurPixels();
   }
 
+  setBlurState(newState: boolean): void {}
+  setBlurStrength2(blurStrength: number): void {}
+  setReplacementState(newState: boolean): void {}
+  setReplacementImage(imageName: string): void {}
+
   /**
    * Calculate the blur amount based on the blur strength passed in and height of the image being blurred.
    */
