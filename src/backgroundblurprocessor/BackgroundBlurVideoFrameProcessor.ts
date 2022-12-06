@@ -10,7 +10,7 @@ import NoOpVideoFrameProcessor from '../videoframeprocessor/NoOpVideoFrameProces
 import BackgroundBlurOptions from './BackgroundBlurOptions';
 import BackgroundBlurProcessor from './BackgroundBlurProcessor';
 import BackgroundBlurProcessorBuiltIn from './BackgroundBlurProcessorBuiltIn';
-// import BackgroundBlurProcessorProvided from './BackgroundBlurProcessorProvided';
+import BackgroundBlurProcessorProvided from './BackgroundBlurProcessorProvided';
 import BlurStrength from './BackgroundBlurStrength';
 
 /**
@@ -44,6 +44,7 @@ class NoOpBackgroundBlurProcessor
    */
   removeObserver(): void {}
 
+  // for cwt2
   setBlurState(): void {}
   setBlurStrength2(): void {}
   setReplacementState(): void {}
@@ -65,7 +66,8 @@ export default class BackgroundBlurVideoFrameProcessor extends BackgroundFilterV
    */
   static async create(
     spec?: BackgroundFilterSpec,
-    options?: BackgroundBlurOptions
+    options?: BackgroundBlurOptions,
+    cwt2?: Boolean
   ): Promise<BackgroundBlurProcessor | undefined> {
     spec = BackgroundBlurVideoFrameProcessor.resolveSpec(spec);
     options = BackgroundBlurVideoFrameProcessor.resolveOptions(options);
@@ -80,17 +82,11 @@ export default class BackgroundBlurVideoFrameProcessor extends BackgroundFilterV
     }
 
     let processor: BackgroundBlurProcessor;
-    // if (await BackgroundBlurProcessorProvided.isSupported()) {
-    //   logger.info('Using browser-provided background blur');
-    //   processor = new BackgroundBlurProcessorProvided(spec, options);
-    // } else {
-    //   logger.info('Using built-in background blur');
-    //   processor = new BackgroundBlurProcessorBuiltIn(spec, options);
-    // }
-
-    logger.info('Using built-in background blur');
-    processor = new BackgroundBlurProcessorBuiltIn(spec, options);
-    
+    if (cwt2) {
+      processor = new BackgroundBlurProcessorBuiltIn(spec, options, true);
+    } else {
+      processor = new BackgroundBlurProcessorProvided(spec, options, false);
+    }    
     await processor.loadAssets();
     return processor;
   }

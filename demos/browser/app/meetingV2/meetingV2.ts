@@ -3168,7 +3168,7 @@ export class DemoMeetingApp
       };
 
       const cpuUtilization: number = Number("100");
-      this.blurProcessor = await BackgroundBlurVideoFrameProcessor.create(this.getBackgroundBlurSpec(), { filterCPUUtilization: cpuUtilization });
+      this.blurProcessor = await BackgroundBlurVideoFrameProcessor.create(this.getBackgroundBlurSpec(), { filterCPUUtilization: cpuUtilization }, true);
       this.blurProcessor.addObserver(this.blurObserver);
       return this.blurProcessor;
     }

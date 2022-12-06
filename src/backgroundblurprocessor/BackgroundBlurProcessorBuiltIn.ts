@@ -25,8 +25,8 @@ export default class BackgroundBlurProcessorBuiltIn extends BackgroundBlurProces
    * @param spec The spec defines the assets that will be used for adding background blur to a frame.
    * @param options How much blur to apply to a frame.
    */
-  constructor(spec?: BackgroundFilterSpec, options?: BackgroundBlurOptions) {
-    super(spec, options);
+  constructor(spec?: BackgroundFilterSpec, options?: BackgroundBlurOptions, cwt2?: boolean) {
+    super(spec, options, cwt2);
 
     this.blurCanvas.width = this.spec.model.input.width;
     this.blurCanvas.height = this.spec.model.input.height;
@@ -181,19 +181,6 @@ export default class BackgroundBlurProcessorBuiltIn extends BackgroundBlurProces
     }
 
     const model = this.spec.model;
-    // this.worker.postMessage({
-    //   msg: 'loadModel',
-    //   payload: {
-    //     modelUrl: model.path,
-    //     inputHeight: model.input.height,
-    //     inputWidth: model.input.width,
-    //     inputChannels: 4,
-    //     modelRangeMin: model.input.range[0],
-    //     modelRangeMax: model.input.range[1],
-    //     blurPixels: this.blurAmount,
-    //   },
-    // });
-    
     this.initWorkerPromise.resolve({});
     this.worker.postMessage({
         msg: 'buildEngine',

@@ -39,8 +39,8 @@ export default class BackgroundBlurProcessorProvided
    * @param spec The spec defines the assets that will be used for adding background blur to a frame
    * @param options How much blur to apply to a frame
    */
-  constructor(spec: BackgroundFilterSpec, options: BackgroundBlurOptions) {
-    super('background blur', spec, options, new BackgroundBlurVideoFrameProcessorDelegate());
+  constructor(spec: BackgroundFilterSpec, options: BackgroundBlurOptions, cwt2: boolean) {
+    super('background blur', spec, options, new BackgroundBlurVideoFrameProcessorDelegate(), cwt2);
 
     this.setBlurStrength(options.blurStrength);
 

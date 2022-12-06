@@ -52,6 +52,7 @@ export default abstract class BackgroundFilterProcessor {
   protected canvasCtx = this.targetCanvas.getContext('2d');
   protected replacementImage: HTMLImageElement;
   protected filterType: string;
+  protected cwt2: boolean;
 
   protected canvasVideoFrameBuffer = new CanvasVideoFrameBuffer(this.targetCanvas);
   protected mask$ = new DeferredObservable<ImageData>();
@@ -135,7 +136,8 @@ export default abstract class BackgroundFilterProcessor {
     filterType: string,
     spec: BackgroundFilterSpec,
     options: BackgroundFilterOptions,
-    delegate: BackgroundFilterVideoFrameProcessorDelegate
+    delegate: BackgroundFilterVideoFrameProcessorDelegate,
+    cwt2?: boolean
   ) {
     this.filterType = filterType;
     this.validateSpec(spec);
@@ -144,6 +146,7 @@ export default abstract class BackgroundFilterProcessor {
     this.logger = options.logger;
     this.delegate = delegate;
     this.initCPUMonitor(options);
+    this.cwt2 = cwt2;
   }
 
   initCPUMonitor(options: BackgroundFilterOptions): void {
@@ -189,28 +192,19 @@ export default abstract class BackgroundFilterProcessor {
       return;
     }
     const model = this.spec.model;
-    // this.worker.postMessage({
-    //   msg: 'loadModel',
-    //   payload: {
-    //     modelUrl: model.path,
-    //     inputHeight: model.input.height,
-    //     inputWidth: model.input.width,
-    //     inputChannels: 4,
-    //     modelRangeMin: model.input.range[0],
-    //     modelRangeMax: model.input.range[1],
-    //     blurPixels: 0,
-    //   },
-    // });
     this.initWorkerPromise.resolve({});
     this.worker.postMessage({
-        msg: 'buildEngine',
-        payload: {
-            segmentationModelUrl: model.path,
-            width: 960,
-            height: 540,
-            channels: 4,
-        }
-    })
+      msg: 'loadModel',
+      payload: {
+        modelUrl: model.path,
+        inputHeight: model.input.height,
+        inputWidth: model.input.width,
+        inputChannels: 4,
+        modelRangeMin: model.input.range[0],
+        modelRangeMax: model.input.range[1],
+        blurPixels: 0,
+      },
+    });
   }
 
   /**
@@ -227,13 +221,6 @@ export default abstract class BackgroundFilterProcessor {
     }
     this.modelInitialized = true;
     this.loadModelPromise.resolve({});
-
-    this.worker.postMessage({
-      msg: 'setBackgroundBlurStrength',
-      payload: {
-        strength: 5
-      }
-    });
   }
 
   /** Updates the payload output value in response to worker's predict event
@@ -385,45 +372,53 @@ export default abstract class BackgroundFilterProcessor {
 
     try {
       this.frameCounter.filterSubmitted();
-      // let mask = this.mask$.value;
+      if (this.cwt2) {
+        const imageDataNew = inputCanvas.getContext('2d').getImageData(0, 0, inputCanvas.width, inputCanvas.height);
+        if (this.frameNumber % this.videoFramesPerFilterUpdate === 0) {
+          const maskPromise = this.mask$.whenNext();
+          this.worker.postMessage({ msg: 'run', payload: imageDataNew }, [imageDataNew.data.buffer]);
+          await maskPromise;
+        }
+      } else {
+        let mask = this.mask$.value;
 
-      const hscale = this.spec.model.input.width / inputCanvas.width;
-      const vscale = this.spec.model.input.height / inputCanvas.height;
+        const hscale = this.spec.model.input.width / inputCanvas.width;
+        const vscale = this.spec.model.input.height / inputCanvas.height;
 
-      if (this.scaledCanvas === undefined) {
-        this.scaledCanvas = document.createElement('canvas');
-        this.scaledCanvas.width = this.spec.model.input.width;
-        this.scaledCanvas.height = this.spec.model.input.height;
+        if (this.scaledCanvas === undefined) {
+          this.scaledCanvas = document.createElement('canvas');
+          this.scaledCanvas.width = this.spec.model.input.width;
+          this.scaledCanvas.height = this.spec.model.input.height;
+        }
+
+        const scaledCtx = this.scaledCanvas.getContext('2d');
+        scaledCtx.save();
+        scaledCtx.scale(hscale, vscale);
+        scaledCtx.drawImage(inputCanvas, 0, 0);
+        scaledCtx.restore();
+
+        const imageData = scaledCtx.getImageData(
+          0,
+          0,
+          this.scaledCanvas.width,
+          this.scaledCanvas.height
+        );
+
+        // update the filter mask based on the filter update rate
+        if (this.frameNumber % this.videoFramesPerFilterUpdate === 0) {
+          // process frame...
+          const maskPromise = this.mask$.whenNext();
+          this.worker.postMessage({ msg: 'predict', payload: imageData }, [imageData.data.buffer]);
+          mask = await maskPromise;
+        }
+        // It's possible that while waiting for the predict to complete the processor was destroyed.
+        // adding a destroyed check here to ensure the implementation of drawImageWithMask does not throw
+        // an error due to destroyed processor.
+        if (!this.destroyed) {
+          this.drawImageWithMask(inputCanvas, mask);
+        }
       }
-
-      const scaledCtx = this.scaledCanvas.getContext('2d');
-      scaledCtx.save();
-      scaledCtx.scale(hscale, vscale);
-      scaledCtx.drawImage(inputCanvas, 0, 0);
-      scaledCtx.restore();
-
-      // const imageData = scaledCtx.getImageData(
-      //   0,
-      //   0,
-      //   this.scaledCanvas.width,
-      //   this.scaledCanvas.height
-      // );
-
-      const imageDataNew = inputCanvas.getContext('2d').getImageData(0, 0, inputCanvas.width, inputCanvas.height);
-
-      // update the filter mask based on the filter update rate
-      if (this.frameNumber % this.videoFramesPerFilterUpdate === 0) {
-        // process frame...
-        const maskPromise = this.mask$.whenNext();
-        this.worker.postMessage({ msg: 'run', payload: imageDataNew }, [imageDataNew.data.buffer]);
-        await maskPromise;
-      }
-      // It's possible that while waiting for the predict to complete the processor was destroyed.
-      // adding a destroyed check here to ensure the implementation of drawImageWithMask does not throw
-      // an error due to destroyed processor.
-      // if (!this.destroyed) {
-      //   this.drawImageWithMask(inputCanvas, mask);
-      // }
+      
     } catch (error) {
       this.logger.error(`could not process ${this.filterType} frame buffer due to ${error}`);
       return buffers;
