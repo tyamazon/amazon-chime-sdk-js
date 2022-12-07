@@ -92,6 +92,7 @@ export default class BackgroundBlurProcessorProvided
 
   setBlurState(newState: boolean): void {}
   setBlurStrength2(blurStrength: number): void {}
+  setGaussianApproxStrength(gaussianApprox: number): void {}
   setReplacementState(newState: boolean): void {}
   setReplacementImage(imageName: string): void {}
 

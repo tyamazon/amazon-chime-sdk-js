@@ -29,6 +29,7 @@ export default interface BackgroundBlurProcessor extends VideoFrameProcessor {
 
   setBlurState(newState: boolean): void;
   setBlurStrength2(blurStrength: number): void;
+  setGaussianApproxStrength(gaussianApprox: number): void;
   setReplacementState(newState: boolean): void;
   setReplacementImage(imageName: string): void;
 

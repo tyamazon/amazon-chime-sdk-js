@@ -109,6 +109,15 @@ export default class BackgroundBlurProcessorBuiltIn extends BackgroundBlurProces
     })
   }
 
+  setGaussianApproxStrength(gaussianApprox: number): void {
+    this.worker.postMessage({
+      msg: 'setGaussianApproxStrength',
+      payload: {
+          strength: gaussianApprox
+      }
+    })
+  }
+
   setReplacementState(newState: boolean): void {
     this.worker.postMessage({
       msg: 'setBackgroundReplacementState',

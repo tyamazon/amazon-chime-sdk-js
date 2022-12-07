@@ -656,16 +656,18 @@ export class DemoMeetingApp
         let effect = (<HTMLSelectElement>document.getElementById('effect')).value;
         let blurStrength = (<HTMLSelectElement>document.getElementById('blurStrength')).value;
         let bgImageName = (<HTMLSelectElement>document.getElementById('backgroundImage')).value;
+        let gaussianApprox = (<HTMLSelectElement>document.getElementById('gaussianApprox')).value;
         if (effect == "BackgroundBlur") {
           this.blurProcessor.setBlurState(true);
+          this.blurProcessor.setBlurStrength2(Number(blurStrength));
+          this.blurProcessor.setGaussianApproxStrength(Number(gaussianApprox));
         } else if (effect == "BackgroundReplacement") {
           this.blurProcessor.setReplacementState(true);
+          this.blurProcessor.setReplacementImage(bgImageName);
         } else if (effect == "None") {
           this.blurProcessor.setBlurState(false);
           this.blurProcessor.setReplacementState(false);
         }
-        this.blurProcessor.setBlurStrength2(Number(blurStrength));
-        this.blurProcessor.setReplacementImage(bgImageName);
       }
     })
 
@@ -2509,7 +2511,8 @@ export class DemoMeetingApp
 
   private getBackgroundBlurSpec(): BackgroundFilterSpec {
     return {
-      paths: BACKGROUND_BLUR_PATHS_CDN_CUSTOM,
+      //paths: BACKGROUND_BLUR_PATHS_CDN_CUSTOM,
+      paths: BACKGROUND_BLUR_PATHS_LOCAL,
       model: BACKGROUND_BLUR_MODEL,
       ...BACKGROUND_BLUR_ASSET_SPEC
     };

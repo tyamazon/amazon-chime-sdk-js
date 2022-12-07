@@ -47,6 +47,7 @@ class NoOpBackgroundBlurProcessor
   // for cwt2
   setBlurState(): void {}
   setBlurStrength2(): void {}
+  setGaussianApproxStrength(): void {}
   setReplacementState(): void {}
   setReplacementImage(): void {}
 }

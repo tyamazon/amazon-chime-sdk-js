@@ -271,6 +271,9 @@ export default abstract class BackgroundFilterProcessor {
       case 'setBackgrounReplacementImageDone':
           console.log('Background replacement image updated')
           break
+      case 'setGaussianApproxStrengthDone':
+          console.log('Gaussian Approximation strength updated')
+          break
       case 'runComplete':
         if (!msg.payload) {
           console.error('failed to run cwt2')
